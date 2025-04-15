@@ -1,8 +1,16 @@
 """
 Test for models.
 """
+from unittest.mock import patch
+from decimal import Decimal
 from django.test import TestCase
 from django.contrib.auth import get_user_model
+from core import models
+
+
+def create_user(email="user@example.com", password="testpass123"):
+    """Create and return a new user."""
+    return get_user_model().objects.create_user(email, password)
 
 
 class ModelTest(TestCase):
@@ -51,3 +59,47 @@ class ModelTest(TestCase):
 
         self.assertTrue(user.is_superuser)
         self.assertTrue(user.is_staff)
+
+    def test_create_recipe(self):
+        """Test creating a recipe is successful"""
+        user = get_user_model().objects.create_user(
+            'test@example.com',
+            'testpass123',
+        )
+
+        recipe = models.Recipe.objects.create(
+            user=user,
+            title='Simple recipe name',
+            time_minutes=5,
+            price=Decimal('5.50'),
+            description="Sample recipe description."
+        )
+
+        self.assertEqual(str(recipe), recipe.title)
+
+    def test_create_tag(self):
+        """Test create a tag is successful"""
+        user = create_user()
+        tag = models.Tag.objects.create(user=user, name="Tag1")
+
+        self.assertEqual(str(tag), tag.name)
+
+    def test_create_ingridient(self):
+        """Test creating an ingridient is successful"""
+        user = create_user()
+
+        ingridient = models.Ingridient.objects.create(
+            user=user,
+            name='Ingridient1'
+        )
+
+        self.assertEqual(str(ingridient), ingridient.name)
+
+    @patch('core.models.uuid.uuid4')
+    def test_recipe_file_name_uuid(self, mock_uuid):
+        """Test genering image path"""
+        uuid = "test-uuid"
+        mock_uuid.return_value = uuid
+        file_path = models.recipe_image_file_path(None, 'example.jpg')
+
+        self.assertEqual(file_path, f'uploads/recipe/{uuid}.jpg')
