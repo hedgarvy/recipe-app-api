@@ -35,7 +35,7 @@ services:
     restart: always
     depends_on:
       - app
-    port:
+    ports:
       - 80:8000
     volumes:
       - static-data:/vol/static
